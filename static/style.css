@@ -1,0 +1,286 @@
+:root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface-hover: #242836;
+    --text: #e8eaed;
+    --text-dim: #9aa0a6;
+    --accent: #4A90D9;
+    --success: #34a853;
+    --danger: #ea4335;
+    --radius: 16px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+
+.container {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 16px;
+    padding-bottom: 100px;
+}
+
+/* Header */
+header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0 24px;
+}
+
+header h1 {
+    font-size: 24px;
+    font-weight: 700;
+}
+
+header nav {
+    display: flex;
+    gap: 8px;
+}
+
+header nav a {
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 14px;
+    padding: 8px 14px;
+    border-radius: 20px;
+    background: var(--surface);
+    transition: background 0.15s;
+}
+
+header nav a:hover,
+header nav a.active {
+    background: var(--surface-hover);
+    color: var(--text);
+}
+
+/* Med Buttons */
+.med-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.med-btn {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    padding: 20px 24px;
+    border: none;
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 18px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: transform 0.1s, background 0.15s;
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+}
+
+.med-btn:active {
+    transform: scale(0.97);
+}
+
+.med-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.med-info {
+    flex: 1;
+}
+
+.med-name {
+    font-weight: 600;
+    font-size: 18px;
+}
+
+.med-dosage {
+    color: var(--text-dim);
+    font-size: 14px;
+    margin-top: 2px;
+}
+
+.med-last {
+    font-size: 12px;
+    color: var(--text-dim);
+    text-align: right;
+    min-width: 60px;
+}
+
+.med-btn .check-flash {
+    position: absolute;
+    inset: 0;
+    background: var(--success);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+
+.med-btn.logged .check-flash {
+    opacity: 0.15;
+}
+
+/* History */
+.day-group {
+    margin-bottom: 24px;
+}
+
+.day-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--surface);
+    margin-bottom: 12px;
+}
+
+.log-entry {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+}
+
+.log-entry + .log-entry {
+    border-top: 1px solid var(--surface);
+}
+
+.log-time {
+    font-size: 14px;
+    color: var(--text-dim);
+    min-width: 70px;
+    font-variant-numeric: tabular-nums;
+}
+
+.log-name {
+    flex: 1;
+    font-weight: 500;
+}
+
+.log-dose {
+    font-size: 13px;
+    color: var(--text-dim);
+}
+
+.undo-btn {
+    background: none;
+    border: none;
+    color: var(--danger);
+    font-size: 12px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-family: inherit;
+}
+
+/* Manage */
+.med-list-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--surface);
+}
+
+.med-list-item .med-info { flex: 1; }
+
+.med-list-item form { display: inline; }
+
+.btn-small {
+    background: var(--surface);
+    border: none;
+    color: var(--text-dim);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.btn-small.danger { color: var(--danger); }
+.btn-small.active-toggle.inactive { opacity: 0.5; }
+
+/* Add form */
+.add-form {
+    margin-top: 24px;
+    padding: 20px;
+    background: var(--surface);
+    border-radius: var(--radius);
+}
+
+.add-form h3 {
+    margin-bottom: 16px;
+    font-size: 16px;
+}
+
+.form-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.form-row input[type="text"] {
+    flex: 1;
+    padding: 12px 14px;
+    border: 1px solid var(--surface-hover);
+    border-radius: 10px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 16px;
+    font-family: inherit;
+}
+
+.form-row input[type="color"] {
+    width: 48px;
+    height: 48px;
+    border: none;
+    border-radius: 10px;
+    background: var(--bg);
+    cursor: pointer;
+    padding: 4px;
+}
+
+.btn-primary {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 10px;
+    background: var(--accent);
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+/* Empty state */
+.empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-dim);
+}
+
+.empty p {
+    margin-bottom: 16px;
+}
+
+.empty a {
+    color: var(--accent);
+    text-decoration: none;
+}

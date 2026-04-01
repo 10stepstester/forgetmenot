@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% set active_page = "history" %}
+
+{% block content %}
+{% if grouped %}
+{% for day, logs in grouped.items() %}
+<div class="day-group">
+    <div class="day-label">{{ day }}</div>
+    {% for log in logs %}
+    <div class="log-entry">
+        <span class="log-time">{{ log.taken_at.strftime("%-I:%M %p") }}</span>
+        <span class="med-dot" style="background: {{ log.med.color }}; width: 10px; height: 10px;"></span>
+        <span class="log-name">{{ log.med.name }}</span>
+        <span class="log-dose">{{ log.med.dosage }}</span>
+        <form method="POST" action="{{ url_for('undo_log', log_id=log.id) }}">
+            <button type="submit" class="undo-btn">undo</button>
+        </form>
+    </div>
+    {% endfor %}
+</div>
+{% endfor %}
+{% else %}
+<div class="empty">
+    <p>No logs yet. Go tap some meds!</p>
+    <a href="{{ url_for('index') }}">Back to meds</a>
+</div>
+{% endif %}
+{% endblock %}

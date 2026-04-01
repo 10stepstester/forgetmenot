@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% set active_page = "manage" %}
+
+{% block content %}
+{% for med in meds %}
+<div class="med-list-item" style="opacity: {{ '0.5' if not med.active else '1' }}">
+    <span class="med-dot" style="background: {{ med.color }}"></span>
+    <div class="med-info">
+        <div class="med-name">{{ med.name }}</div>
+        <div class="med-dosage">{{ med.dosage }}</div>
+    </div>
+    <form method="POST" action="{{ url_for('toggle_med', med_id=med.id) }}">
+        <button type="submit" class="btn-small">{{ "Enable" if not med.active else "Disable" }}</button>
+    </form>
+    <form method="POST" action="{{ url_for('delete_med', med_id=med.id) }}">
+        <button type="submit" class="btn-small danger">Delete</button>
+    </form>
+</div>
+{% endfor %}
+
+<div class="add-form">
+    <h3>Add Medication</h3>
+    <form method="POST" action="{{ url_for('add_med') }}">
+        <div class="form-row">
+            <input type="text" name="name" placeholder="Medication name" required>
+        </div>
+        <div class="form-row">
+            <input type="text" name="dosage" placeholder="Dosage (e.g. 500mg)" required>
+            <input type="color" name="color" value="#4A90D9">
+        </div>
+        <button type="submit" class="btn-primary">Add</button>
+    </form>
+</div>
+{% endblock %}

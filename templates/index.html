@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% set active_page = "home" %}
+
+{% block content %}
+{% if meds %}
+<div class="med-grid">
+    {% for med in meds %}
+    <form method="POST" action="{{ url_for('log_med', med_id=med.id) }}">
+        <button type="submit" class="med-btn">
+            <span class="med-dot" style="background: {{ med.color }}"></span>
+            <div class="med-info">
+                <div class="med-name">{{ med.name }}</div>
+                <div class="med-dosage">{{ med.dosage }}</div>
+            </div>
+            <div class="med-last">
+                {% if med.logs %}
+                    {{ med.logs[0].taken_at.strftime("%-I:%M %p") }}
+                {% else %}
+                    --
+                {% endif %}
+            </div>
+        </button>
+    </form>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty">
+    <p>No medications set up yet.</p>
+    <a href="{{ url_for('manage') }}">Add your first med</a>
+</div>
+{% endif %}
+{% endblock %}
