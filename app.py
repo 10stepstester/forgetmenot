@@ -12,18 +12,18 @@ db = SQLAlchemy(app)
 
 
 FREQUENCY_HOURS = {
-    "1x": 24,
-    "2x": 12,
-    "3x": 8,
-    "4x": 6,
+    "1x/day": 24,
+    "2x/day": 12,
+    "3x/day": 8,
+    "4x/day": 6,
     "as_needed": None,
 }
 
 FREQUENCY_LABELS = {
-    "1x": "1x / day",
-    "2x": "2x / day",
-    "3x": "3x / day",
-    "4x": "4x / day",
+    "1x/day": "1x / day",
+    "2x/day": "2x / day",
+    "3x/day": "3x / day",
+    "4x/day": "4x / day",
     "as_needed": "As needed",
 }
 
@@ -32,6 +32,7 @@ class Med(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=False)
     frequency = db.Column(db.String(20), nullable=False, default="as_needed")
+    # DB values: "1x/day", "2x/day", "3x/day", "4x/day", "as_needed"
     color = db.Column(db.String(7), nullable=False, default="#4A90D9")
     active = db.Column(db.Boolean, default=True)
     logs = db.relationship("MedLog", backref="med", lazy=True, order_by="MedLog.taken_at.desc()")
@@ -85,12 +86,6 @@ with app.app_context():
 def index():
     meds = Med.query.filter_by(active=True).all()
     return render_template("index.html", meds=meds)
-
-
-@app.route("/debug/meds")
-def debug_meds():
-    meds = Med.query.all()
-    return jsonify([{"id": m.id, "name": m.name, "frequency": repr(m.frequency), "active": m.active, "has_logs": len(m.logs) > 0} for m in meds])
 
 
 @app.route("/med/<int:med_id>")
