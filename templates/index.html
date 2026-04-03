@@ -66,9 +66,7 @@
 <div class="modal-overlay" id="quickModal">
     <div class="modal quick-modal">
         <h3 id="quickMedName"></h3>
-        <form method="POST" id="quickLogForm">
-            <button type="submit" class="quick-action-btn log-btn">Log Now</button>
-        </form>
+        <button class="quick-action-btn log-btn" id="quickLogBtn">Log Now</button>
         <button class="quick-action-btn past-btn" id="quickPastBtn">Log Past Dose</button>
         <div class="quick-past-picker" id="quickPastPicker" style="display:none">
             <form method="POST" id="quickPastForm">
@@ -109,7 +107,7 @@ addModal.addEventListener('click', e => { if (e.target === addModal) addModal.cl
 const quickModal = document.getElementById('quickModal');
 const quickModalClose = document.getElementById('quickModalClose');
 const quickMedName = document.getElementById('quickMedName');
-const quickLogForm = document.getElementById('quickLogForm');
+const quickLogBtn = document.getElementById('quickLogBtn');
 const quickToggleForm = document.getElementById('quickToggleForm');
 const quickToggleBtn = document.getElementById('quickToggleBtn');
 const quickPastBtn = document.getElementById('quickPastBtn');
@@ -119,6 +117,7 @@ const quickPastTime = document.getElementById('quickPastTime');
 
 let pressTimer = null;
 let didLongPress = false;
+let currentMedId = null;
 
 document.querySelectorAll('.med-btn').forEach(btn => {
     const medId = btn.dataset.medId;
@@ -128,13 +127,11 @@ document.querySelectorAll('.med-btn').forEach(btn => {
         pressTimer = setTimeout(() => {
             didLongPress = true;
             e.preventDefault();
-            // Set up quick modal
+            currentMedId = medId;
             quickMedName.textContent = btn.querySelector('.med-name').textContent;
-            quickLogForm.action = `/log/${medId}`;
             quickPastForm.action = `/log/${medId}`;
             quickToggleForm.action = `/med/${medId}/toggle`;
             quickPastPicker.style.display = 'none';
-            // Set default past time to now
             const now = new Date();
             now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
             quickPastTime.value = now.toISOString().slice(0, 16);
@@ -154,6 +151,17 @@ document.querySelectorAll('.med-btn').forEach(btn => {
             return;
         }
         window.location.href = btn.dataset.href;
+    });
+});
+
+// Quick modal Log Now — fetch then force reload
+quickLogBtn.addEventListener('click', () => {
+    fetch(`/log/${currentMedId}`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: 'redirect=index'
+    }).then(() => {
+        window.location.href = '/?t=' + Date.now();
     });
 });
 
