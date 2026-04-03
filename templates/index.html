@@ -136,6 +136,7 @@ document.querySelectorAll('.med-btn').forEach(btn => {
         now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
         quickPastTime.value = now.toISOString().slice(0, 16);
         quickModal.classList.add('active');
+        modalOpenedAt = Date.now();
     }
 
     btn.addEventListener('touchstart', () => {
@@ -148,6 +149,7 @@ document.querySelectorAll('.med-btn').forEach(btn => {
         clearTimeout(pressTimer);
         if (didLongPress) {
             e.preventDefault();
+            e.stopImmediatePropagation();
         }
     });
     btn.addEventListener('touchcancel', () => {
@@ -164,6 +166,7 @@ document.querySelectorAll('.med-btn').forEach(btn => {
     btn.addEventListener('click', e => {
         if (didLongPress) {
             e.preventDefault();
+            e.stopImmediatePropagation();
             didLongPress = false;
         }
     });
@@ -176,7 +179,18 @@ quickPastBtn.addEventListener('click', () => {
     quickPastPicker.style.display = quickPastPicker.style.display === 'none' ? 'block' : 'none';
 });
 
+// Convert local time to UTC before submitting
+quickPastForm.addEventListener('submit', () => {
+    const localDate = new Date(quickPastTime.value);
+    quickPastTime.value = localDate.toISOString().slice(0, 19);
+});
+
 quickModalClose.addEventListener('click', () => quickModal.classList.remove('active'));
-quickModal.addEventListener('click', e => { if (e.target === quickModal) quickModal.classList.remove('active'); });
+let modalOpenedAt = 0;
+quickModal.addEventListener('click', e => {
+    // Ignore ghost clicks within 400ms of opening (from touch long press)
+    if (Date.now() - modalOpenedAt < 400) return;
+    if (e.target === quickModal) quickModal.classList.remove('active');
+});
 </script>
 {% endblock %}

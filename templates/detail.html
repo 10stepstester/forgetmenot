@@ -125,5 +125,12 @@ pastToggle.addEventListener('click', () => {
         pastTime.value = now.toISOString().slice(0, 16);
     }
 });
+
+// Convert local time to UTC before submitting past dose
+pastForm.querySelector('form').addEventListener('submit', () => {
+    const localVal = pastTime.value; // "2026-04-03T06:30"
+    const localDate = new Date(localVal); // parsed as local time
+    pastTime.value = localDate.toISOString().slice(0, 19); // UTC ISO format
+});
 </script>
 {% endblock %}
