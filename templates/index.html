@@ -9,7 +9,7 @@
 {% if meds %}
 <div class="med-grid">
     {% for med in meds %}
-    <div class="med-btn {{ 'overdue' if med.is_overdue }}" data-med-id="{{ med.id }}" data-href="{{ url_for('med_detail', med_id=med.id) }}" style="--med-color: {{ med.color }}">
+    <a href="{{ url_for('med_detail', med_id=med.id) }}" class="med-btn {{ 'overdue' if med.is_overdue }}" data-med-id="{{ med.id }}" style="--med-color: {{ med.color }}">
         <span class="med-dot" style="background: {{ med.color }}"></span>
         <div class="med-info">
             <div class="med-name">{{ med.name }}</div>
@@ -26,7 +26,7 @@
             <div class="med-last">No doses logged</div>
             {% endif %}
         </div>
-    </div>
+    </a>
     {% endfor %}
 </div>
 {% else %}
@@ -66,7 +66,9 @@
 <div class="modal-overlay" id="quickModal">
     <div class="modal quick-modal">
         <h3 id="quickMedName"></h3>
-        <button class="quick-action-btn log-btn" id="quickLogBtn">Log Now</button>
+        <form method="POST" id="quickLogForm">
+            <button type="submit" class="quick-action-btn log-btn">Log Now</button>
+        </form>
         <button class="quick-action-btn past-btn" id="quickPastBtn">Log Past Dose</button>
         <div class="quick-past-picker" id="quickPastPicker" style="display:none">
             <form method="POST" id="quickPastForm">
@@ -107,7 +109,7 @@ addModal.addEventListener('click', e => { if (e.target === addModal) addModal.cl
 const quickModal = document.getElementById('quickModal');
 const quickModalClose = document.getElementById('quickModalClose');
 const quickMedName = document.getElementById('quickMedName');
-const quickLogBtn = document.getElementById('quickLogBtn');
+const quickLogForm = document.getElementById('quickLogForm');
 const quickToggleForm = document.getElementById('quickToggleForm');
 const quickToggleBtn = document.getElementById('quickToggleBtn');
 const quickPastBtn = document.getElementById('quickPastBtn');
@@ -122,48 +124,53 @@ let currentMedId = null;
 document.querySelectorAll('.med-btn').forEach(btn => {
     const medId = btn.dataset.medId;
 
-    btn.addEventListener('pointerdown', e => {
+    function openQuickModal() {
+        didLongPress = true;
+        currentMedId = medId;
+        quickMedName.textContent = btn.querySelector('.med-name').textContent;
+        quickLogForm.action = `/log/${medId}`;
+        quickPastForm.action = `/log/${medId}`;
+        quickToggleForm.action = `/med/${medId}/toggle`;
+        quickPastPicker.style.display = 'none';
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        quickPastTime.value = now.toISOString().slice(0, 16);
+        quickModal.classList.add('active');
+    }
+
+    btn.addEventListener('touchstart', () => {
         didLongPress = false;
-        pressTimer = setTimeout(() => {
-            didLongPress = true;
+        pressTimer = setTimeout(() => openQuickModal(), 500);
+    });
+
+    btn.addEventListener('touchmove', () => clearTimeout(pressTimer));
+    btn.addEventListener('touchend', e => {
+        clearTimeout(pressTimer);
+        if (didLongPress) {
             e.preventDefault();
-            currentMedId = medId;
-            quickMedName.textContent = btn.querySelector('.med-name').textContent;
-            quickPastForm.action = `/log/${medId}`;
-            quickToggleForm.action = `/med/${medId}/toggle`;
-            quickPastPicker.style.display = 'none';
-            const now = new Date();
-            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-            quickPastTime.value = now.toISOString().slice(0, 16);
-            quickModal.classList.add('active');
-        }, 500);
+        }
+    });
+    btn.addEventListener('touchcancel', () => {
+        clearTimeout(pressTimer);
+        didLongPress = false;
     });
 
-    btn.addEventListener('pointerup', () => clearTimeout(pressTimer));
-    btn.addEventListener('pointercancel', () => clearTimeout(pressTimer));
-    btn.addEventListener('pointermove', e => {
-        if (e.pointerType === 'touch') clearTimeout(pressTimer);
+    // Desktop: mouse-based long press
+    btn.addEventListener('mousedown', () => {
+        didLongPress = false;
+        pressTimer = setTimeout(() => openQuickModal(), 500);
     });
-
+    btn.addEventListener('mouseup', () => clearTimeout(pressTimer));
     btn.addEventListener('click', e => {
         if (didLongPress) {
+            e.preventDefault();
             didLongPress = false;
-            return;
         }
-        window.location.href = btn.dataset.href;
     });
+
+    btn.addEventListener('contextmenu', e => e.preventDefault());
 });
 
-// Quick modal Log Now — fetch then force reload
-quickLogBtn.addEventListener('click', () => {
-    fetch(`/log/${currentMedId}`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: 'redirect=index'
-    }).then(() => {
-        window.location.href = '/?t=' + Date.now();
-    });
-});
 
 quickPastBtn.addEventListener('click', () => {
     quickPastPicker.style.display = quickPastPicker.style.display === 'none' ? 'block' : 'none';
@@ -171,10 +178,5 @@ quickPastBtn.addEventListener('click', () => {
 
 quickModalClose.addEventListener('click', () => quickModal.classList.remove('active'));
 quickModal.addEventListener('click', e => { if (e.target === quickModal) quickModal.classList.remove('active'); });
-
-// Prevent context menu on long press (mobile)
-document.querySelectorAll('.med-btn').forEach(btn => {
-    btn.addEventListener('contextmenu', e => e.preventDefault());
-});
 </script>
 {% endblock %}

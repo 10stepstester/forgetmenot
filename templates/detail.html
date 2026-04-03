@@ -30,7 +30,10 @@
 
 <!-- Actions -->
 <div class="detail-actions">
-    <button class="btn-primary" id="logNowBtn">Log Now</button>
+    <form method="POST" action="{{ url_for('log_med', med_id=med.id) }}">
+        <input type="hidden" name="redirect" value="detail">
+        <button type="submit" class="btn-primary">Log Now</button>
+    </form>
 
     <div class="past-dose-section">
         <button class="btn-secondary" id="pastDoseToggle">Log a Past Dose</button>
@@ -107,17 +110,6 @@ document.querySelectorAll('.next-time, .last-time').forEach(el => {
             el.textContent = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
         }
     }
-});
-
-// Log Now button — use fetch then force reload
-document.getElementById('logNowBtn').addEventListener('click', () => {
-    fetch('{{ url_for("log_med", med_id=med.id) }}', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: 'redirect=detail'
-    }).then(() => {
-        window.location.href = window.location.pathname + '?t=' + Date.now();
-    });
 });
 
 // Past dose toggle
