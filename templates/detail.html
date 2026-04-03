@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block content %}
+<header class="detail-header">
+    <a href="{{ url_for('index') }}" class="back-btn">&larr;</a>
+    <h1>
+        <span class="med-dot" style="background: {{ med.color }}"></span>
+        {{ med.name }}
+    </h1>
+</header>
+
+<div class="detail-status">
+    {% if med.frequency != 'as_needed' and med.next_dose_at %}
+    <div class="status-row {{ 'overdue' if med.is_overdue }}">
+        <span class="status-label">Next dose</span>
+        <span class="status-value next-time" data-utc="{{ med.next_dose_at.isoformat() }}Z">{{ med.next_dose_at.strftime("%-I:%M %p") }}</span>
+    </div>
+    {% endif %}
+    <div class="status-row">
+        <span class="status-label">Last taken</span>
+        <span class="status-value last-time" data-utc="{{ med.last_taken.isoformat() if med.last_taken }}Z">
+            {% if med.last_taken %}{{ med.last_taken.strftime("%-I:%M %p") }}{% else %}Never{% endif %}
+        </span>
+    </div>
+    <div class="status-row">
+        <span class="status-label">Frequency</span>
+        <span class="status-value">{{ med.frequency_label }}</span>
+    </div>
+</div>
+
+<!-- Actions -->
+<div class="detail-actions">
+    <form method="POST" action="{{ url_for('log_med', med_id=med.id) }}">
+        <input type="hidden" name="redirect" value="detail">
+        <button type="submit" class="btn-primary">Log Now</button>
+    </form>
+
+    <div class="past-dose-section">
+        <button class="btn-secondary" id="pastDoseToggle">Log a Past Dose</button>
+        <div class="past-dose-form" id="pastDoseForm" style="display:none">
+            <form method="POST" action="{{ url_for('log_med', med_id=med.id) }}">
+                <input type="hidden" name="redirect" value="detail">
+                <input type="datetime-local" name="taken_at" id="pastDoseTime">
+                <button type="submit" class="btn-primary btn-sm">Log</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit -->
+<div class="detail-edit">
+    <h3>Edit</h3>
+    <form method="POST" action="{{ url_for('edit_med', med_id=med.id) }}">
+        <div class="form-row">
+            <input type="text" name="name" value="{{ med.name }}" required>
+        </div>
+        <div class="form-row">
+            <select name="frequency">
+                {% for key, label in frequency_labels.items() %}
+                <option value="{{ key }}" {{ 'selected' if med.frequency == key }}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <input type="color" name="color" value="{{ med.color }}">
+        </div>
+        <button type="submit" class="btn-primary btn-sm">Save Changes</button>
+    </form>
+</div>
+
+<!-- Danger Zone -->
+<div class="detail-danger">
+    <form method="POST" action="{{ url_for('toggle_med', med_id=med.id) }}">
+        <input type="hidden" name="redirect" value="detail">
+        <button type="submit" class="btn-secondary">{{ "Enable" if not med.active else "Disable" }}</button>
+    </form>
+    <form method="POST" action="{{ url_for('delete_med', med_id=med.id) }}" onsubmit="return confirm('Delete {{ med.name }}? This removes all logs too.')">
+        <button type="submit" class="btn-danger">Delete</button>
+    </form>
+</div>
+
+<!-- Recent Logs -->
+{% if logs %}
+<div class="detail-logs">
+    <h3>Recent Doses</h3>
+    {% for log in logs %}
+    <div class="log-entry">
+        <span class="log-time last-time" data-utc="{{ log.taken_at.isoformat() }}Z">{{ log.taken_at.strftime("%b %d, %-I:%M %p") }}</span>
+        <div class="log-actions">
+            <form method="POST" action="{{ url_for('undo_log', log_id=log.id) }}">
+                <input type="hidden" name="redirect" value="detail">
+                <button type="submit" class="undo-btn">delete</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Timezone conversion
+document.querySelectorAll('.next-time, .last-time').forEach(el => {
+    const utc = el.dataset.utc;
+    if (utc && utc !== 'Z') {
+        const d = new Date(utc);
+        // For recent logs, show date + time
+        if (el.closest('.detail-logs')) {
+            el.textContent = d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ', ' + d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+        } else {
+            el.textContent = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+        }
+    }
+});
+
+// Past dose toggle
+const pastToggle = document.getElementById('pastDoseToggle');
+const pastForm = document.getElementById('pastDoseForm');
+const pastTime = document.getElementById('pastDoseTime');
+pastToggle.addEventListener('click', () => {
+    const showing = pastForm.style.display !== 'none';
+    pastForm.style.display = showing ? 'none' : 'block';
+    if (!showing) {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        pastTime.value = now.toISOString().slice(0, 16);
+    }
+});
+</script>
+{% endblock %}

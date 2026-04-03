@@ -13,15 +13,8 @@
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>ForgetMeNot</h1>
-            <nav>
-                <a href="{{ url_for('index') }}" class="{{ 'active' if active_page == 'home' }}">Meds</a>
-                <a href="{{ url_for('history') }}" class="{{ 'active' if active_page == 'history' }}">History</a>
-                <a href="{{ url_for('manage') }}" class="{{ 'active' if active_page == 'manage' }}">Manage</a>
-            </nav>
-        </header>
         {% block content %}{% endblock %}
     </div>
+    {% block scripts %}{% endblock %}
 </body>
 </html>

@@ -1,32 +1,171 @@
 {% extends "base.html" %}
-{% set active_page = "home" %}
 
 {% block content %}
+<header class="home-header">
+    <h1>ForgetMeNot</h1>
+    <a href="{{ url_for('history') }}" class="history-link">History</a>
+</header>
+
 {% if meds %}
 <div class="med-grid">
     {% for med in meds %}
-    <form method="POST" action="{{ url_for('log_med', med_id=med.id) }}">
-        <button type="submit" class="med-btn">
-            <span class="med-dot" style="background: {{ med.color }}"></span>
-            <div class="med-info">
-                <div class="med-name">{{ med.name }}</div>
-                <div class="med-dosage">{{ med.dosage }}</div>
-            </div>
-            <div class="med-last">
-                {% if med.logs %}
-                    {{ med.logs[0].taken_at.strftime("%-I:%M %p") }}
-                {% else %}
-                    --
-                {% endif %}
-            </div>
-        </button>
-    </form>
+    <a href="{{ url_for('med_detail', med_id=med.id) }}" class="med-btn {{ 'overdue' if med.is_overdue }}" data-med-id="{{ med.id }}" style="--med-color: {{ med.color }}">
+        <span class="med-dot" style="background: {{ med.color }}"></span>
+        <div class="med-info">
+            <div class="med-name">{{ med.name }}</div>
+            {% if med.frequency != 'as_needed' and med.next_dose_at %}
+            <div class="med-next">Next: <span class="next-time" data-utc="{{ med.next_dose_at.isoformat() }}Z">{{ med.next_dose_at.strftime("%-I:%M %p") }}</span></div>
+            {% elif med.frequency == 'as_needed' %}
+            <div class="med-freq">As needed</div>
+            {% else %}
+            <div class="med-freq">{{ med.frequency_label }}</div>
+            {% endif %}
+            {% if med.last_taken %}
+            <div class="med-last">Last: <span class="last-time" data-utc="{{ med.last_taken.isoformat() }}Z">{{ med.last_taken.strftime("%-I:%M %p") }}</span></div>
+            {% else %}
+            <div class="med-last">No doses logged</div>
+            {% endif %}
+        </div>
+    </a>
     {% endfor %}
 </div>
 {% else %}
 <div class="empty">
     <p>No medications set up yet.</p>
-    <a href="{{ url_for('manage') }}">Add your first med</a>
+    <p>Tap + below to add your first med.</p>
 </div>
 {% endif %}
+
+<button class="fab" id="addBtn" aria-label="Add medication">+</button>
+
+<!-- Add Med Modal -->
+<div class="modal-overlay" id="addModal">
+    <div class="modal">
+        <h3>Add Medication</h3>
+        <form method="POST" action="{{ url_for('add_med') }}">
+            <div class="form-row">
+                <input type="text" name="name" placeholder="Medication name" required>
+            </div>
+            <div class="form-row">
+                <select name="frequency">
+                    <option value="as_needed">As needed</option>
+                    <option value="1x">1x / day</option>
+                    <option value="2x">2x / day</option>
+                    <option value="3x">3x / day</option>
+                    <option value="4x">4x / day</option>
+                </select>
+                <input type="color" name="color" value="#4A90D9">
+            </div>
+            <button type="submit" class="btn-primary">Add</button>
+        </form>
+        <button class="modal-close" id="addModalClose">Cancel</button>
+    </div>
+</div>
+
+<!-- Long-press Quick Actions Modal -->
+<div class="modal-overlay" id="quickModal">
+    <div class="modal quick-modal">
+        <h3 id="quickMedName"></h3>
+        <form method="POST" id="quickLogForm">
+            <button type="submit" class="quick-action-btn log-btn">Log Now</button>
+        </form>
+        <button class="quick-action-btn past-btn" id="quickPastBtn">Log Past Dose</button>
+        <div class="quick-past-picker" id="quickPastPicker" style="display:none">
+            <form method="POST" id="quickPastForm">
+                <input type="datetime-local" name="taken_at" id="quickPastTime">
+                <input type="hidden" name="redirect" value="index">
+                <button type="submit" class="btn-primary btn-sm">Log</button>
+            </form>
+        </div>
+        <form method="POST" id="quickToggleForm">
+            <button type="submit" class="quick-action-btn disable-btn" id="quickToggleBtn">Disable</button>
+            <input type="hidden" name="redirect" value="index">
+        </form>
+        <button class="modal-close" id="quickModalClose">Cancel</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// --- Timezone conversion ---
+document.querySelectorAll('.next-time, .last-time').forEach(el => {
+    const utc = el.dataset.utc;
+    if (utc) {
+        const d = new Date(utc);
+        el.textContent = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    }
+});
+
+// --- Add modal ---
+const addBtn = document.getElementById('addBtn');
+const addModal = document.getElementById('addModal');
+const addModalClose = document.getElementById('addModalClose');
+addBtn.addEventListener('click', () => addModal.classList.add('active'));
+addModalClose.addEventListener('click', () => addModal.classList.remove('active'));
+addModal.addEventListener('click', e => { if (e.target === addModal) addModal.classList.remove('active'); });
+
+// --- Long press for quick actions ---
+const quickModal = document.getElementById('quickModal');
+const quickModalClose = document.getElementById('quickModalClose');
+const quickMedName = document.getElementById('quickMedName');
+const quickLogForm = document.getElementById('quickLogForm');
+const quickToggleForm = document.getElementById('quickToggleForm');
+const quickToggleBtn = document.getElementById('quickToggleBtn');
+const quickPastBtn = document.getElementById('quickPastBtn');
+const quickPastPicker = document.getElementById('quickPastPicker');
+const quickPastForm = document.getElementById('quickPastForm');
+const quickPastTime = document.getElementById('quickPastTime');
+
+let pressTimer = null;
+let didLongPress = false;
+
+document.querySelectorAll('.med-btn').forEach(btn => {
+    const medId = btn.dataset.medId;
+
+    btn.addEventListener('pointerdown', e => {
+        didLongPress = false;
+        pressTimer = setTimeout(() => {
+            didLongPress = true;
+            e.preventDefault();
+            // Set up quick modal
+            quickMedName.textContent = btn.querySelector('.med-name').textContent;
+            quickLogForm.action = `/log/${medId}`;
+            quickPastForm.action = `/log/${medId}`;
+            quickToggleForm.action = `/med/${medId}/toggle`;
+            quickPastPicker.style.display = 'none';
+            // Set default past time to now
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            quickPastTime.value = now.toISOString().slice(0, 16);
+            quickModal.classList.add('active');
+        }, 500);
+    });
+
+    btn.addEventListener('pointerup', () => clearTimeout(pressTimer));
+    btn.addEventListener('pointercancel', () => clearTimeout(pressTimer));
+    btn.addEventListener('pointermove', e => {
+        if (e.pointerType === 'touch') clearTimeout(pressTimer);
+    });
+
+    btn.addEventListener('click', e => {
+        if (didLongPress) {
+            e.preventDefault();
+            didLongPress = false;
+        }
+    });
+});
+
+quickPastBtn.addEventListener('click', () => {
+    quickPastPicker.style.display = quickPastPicker.style.display === 'none' ? 'block' : 'none';
+});
+
+quickModalClose.addEventListener('click', () => quickModal.classList.remove('active'));
+quickModal.addEventListener('click', e => { if (e.target === quickModal) quickModal.classList.remove('active'); });
+
+// Prevent context menu on long press (mobile)
+document.querySelectorAll('.med-btn').forEach(btn => {
+    btn.addEventListener('contextmenu', e => e.preventDefault());
+});
+</script>
 {% endblock %}
