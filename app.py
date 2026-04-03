@@ -87,6 +87,12 @@ def index():
     return render_template("index.html", meds=meds)
 
 
+@app.route("/debug/meds")
+def debug_meds():
+    meds = Med.query.all()
+    return jsonify([{"id": m.id, "name": m.name, "frequency": repr(m.frequency), "active": m.active, "has_logs": len(m.logs) > 0} for m in meds])
+
+
 @app.route("/med/<int:med_id>")
 def med_detail(med_id):
     med = Med.query.get_or_404(med_id)
