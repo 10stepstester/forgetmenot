@@ -9,7 +9,7 @@
 {% if meds %}
 <div class="med-grid">
     {% for med in meds %}
-    <a href="{{ url_for('med_detail', med_id=med.id) }}" class="med-btn {{ 'overdue' if med.is_overdue }}" data-med-id="{{ med.id }}" style="--med-color: {{ med.color }}">
+    <div class="med-btn {{ 'overdue' if med.is_overdue }}" data-med-id="{{ med.id }}" data-href="{{ url_for('med_detail', med_id=med.id) }}" style="--med-color: {{ med.color }}">
         <span class="med-dot" style="background: {{ med.color }}"></span>
         <div class="med-info">
             <div class="med-name">{{ med.name }}</div>
@@ -26,7 +26,7 @@
             <div class="med-last">No doses logged</div>
             {% endif %}
         </div>
-    </a>
+    </div>
     {% endfor %}
 </div>
 {% else %}
@@ -150,9 +150,10 @@ document.querySelectorAll('.med-btn').forEach(btn => {
 
     btn.addEventListener('click', e => {
         if (didLongPress) {
-            e.preventDefault();
             didLongPress = false;
+            return;
         }
+        window.location.href = btn.dataset.href;
     });
 });
 
