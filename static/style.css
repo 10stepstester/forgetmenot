@@ -1,12 +1,12 @@
 :root {
-    --bg: #0f1117;
-    --surface: #1a1d27;
-    --surface-hover: #242836;
-    --text: #e8eaed;
-    --text-dim: #9aa0a6;
+    --bg: #f5f5f7;
+    --surface: #ffffff;
+    --surface-hover: #e8e8ed;
+    --text: #1d1d1f;
+    --text-dim: #6e6e73;
     --accent: #4A90D9;
     --success: #34a853;
-    --warning: #f59e0b;
+    --warning: #e67e00;
     --danger: #ea4335;
     --radius: 16px;
 }
@@ -101,6 +101,7 @@ body {
     text-decoration: none;
     position: relative;
     overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
 }
 
 .med-btn:active {
@@ -163,7 +164,7 @@ body {
     font-size: 28px;
     border: none;
     cursor: pointer;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -190,7 +191,7 @@ body {
 }
 
 .modal {
-    background: var(--surface);
+    background: var(--bg);
     border-radius: 20px 20px 0 0;
     padding: 24px;
     width: 100%;
@@ -275,6 +276,7 @@ body {
     border-radius: var(--radius);
     padding: 16px 20px;
     margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
 }
 
 .status-row {
@@ -340,6 +342,7 @@ body {
     border-radius: var(--radius);
     padding: 20px;
     margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
 }
 
 .detail-edit h3 {
@@ -445,7 +448,7 @@ body {
     padding: 12px 14px;
     border: 1px solid var(--surface-hover);
     border-radius: 10px;
-    background: var(--bg);
+    background: var(--surface);
     color: var(--text);
     font-size: 16px;
     font-family: inherit;
