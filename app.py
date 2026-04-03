@@ -52,21 +52,34 @@ class Med(db.Model):
         return None
 
     @property
+    def last_taken_before_now(self):
+        now = datetime.now(timezone.utc)
+        for log in self.logs:
+            taken = log.taken_at
+            if taken.tzinfo is not None:
+                taken = taken.replace(tzinfo=None)
+            if taken <= now.replace(tzinfo=None):
+                return taken
+        return None
+
+    @property
     def next_dose_at(self):
         hours = FREQUENCY_HOURS.get(self.frequency)
-        if hours is None or not self.logs:
+        if hours is None:
             return None
-        return self.logs[0].taken_at + timedelta(hours=hours)
+        last = self.last_taken_before_now
+        if last is None:
+            return None
+        return last + timedelta(hours=hours)
 
     @property
     def is_overdue(self):
         nxt = self.next_dose_at
         if nxt is None:
             return False
-        now = datetime.now(timezone.utc)
-        # Handle naive datetimes from DB
-        if nxt.tzinfo is None:
-            nxt = nxt.replace(tzinfo=timezone.utc)
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        if nxt.tzinfo is not None:
+            nxt = nxt.replace(tzinfo=None)
         return now > nxt
 
     @property
