@@ -55,7 +55,11 @@ class Med(db.Model):
         nxt = self.next_dose_at
         if nxt is None:
             return False
-        return datetime.now(timezone.utc) > nxt
+        now = datetime.now(timezone.utc)
+        # Handle naive datetimes from DB
+        if nxt.tzinfo is None:
+            nxt = nxt.replace(tzinfo=timezone.utc)
+        return now > nxt
 
     @property
     def frequency_label(self):
